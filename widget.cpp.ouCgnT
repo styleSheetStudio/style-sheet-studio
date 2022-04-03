@@ -1,0 +1,2335 @@
+ #include "widget.h"
+#include "ui_widget.h"
+#include "QDebug"
+#include "QLabel"
+#include "ui_widget.h"
+#include "QVBoxLayout"
+#include "QSpacerItem"
+#include <gradientpicker.h>
+#include <gpick.h>
+#include <panel.h>
+#include <paneltext.h>
+#include <QHBoxLayout>
+#include <QImage>
+#include <QRegExp>
+#include <QToolTip>
+#include <QClipboard>
+#include <QFileInfo>
+#include "highlighter.h"
+
+Widget::Widget(QString fileName, QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Widget)
+{
+    ui->setupUi(this);
+
+    /************** Устанавливаем свойства окна ******************/
+    this->setWindowIcon(QIcon(":/icons/images/logo.png"));
+    this->setWindowTitle("QSS studio");
+    this->layout()->setMargin(0);
+QFileInfo info(fileName);
+this->setWindowTitle("QSS - "+info.fileName()+"*");
+
+fileNames= fileName;
+    //this->setStyleSheet(AllstyleSheet::getMainWidgetStyle()); ломает stylesheet QSrollBar
+
+    /************** Это вспомогательные элементы (пока оставим) ***********/
+
+    // PanelText *pnk = new PanelText;
+    // pnk->show();
+
+    /************** Настраиваем StyleSheet TabView ***********/
+    //в будущем
+
+
+    /************** Настраиваем панель свойств (справа) ***********/
+    rightbox = new QVBoxLayout;
+    rightbox->setMargin(0);
+    rightbox->setSpacing(0);
+    rightbox->setAlignment(Qt::AlignTop);
+    //rightbox->addSpacerItem(new QSpacerItem(1,1,QSizePolicy::Fixed,QSizePolicy::Expanding));
+    ui->scrollArea->setStyleSheet(AllstyleSheet::scrollArea());
+    ui->scrollAreaWidgetContents->setStyleSheet(AllstyleSheet::getScrollWidgetStyle());
+    ui->scrollAreaWidgetContents->setLayout(rightbox);
+   // ui->colNum->setAlignment(Qt::AlignTop);
+    QTextCursor cursor = ui->colNum->textCursor();
+    QTextBlockFormat textBlockFormat = cursor.blockFormat();
+   textBlockFormat.setAlignment(Qt::AlignTop);
+   cursor.mergeBlockFormat(textBlockFormat);
+   ui->colNum->setTextCursor(cursor);
+   ui->colNum->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+ ui->colNum->setVerticalScrollBar(ui->code_edit->verticalScrollBar());
+  ui->code_edit->setText("background-color:");
+  highlighter = new Highlighter(ui->code_edit->document());
+
+ ui->copyWidgetSS->setToolTip("Скопировать текущий виджет для вставки в QtDesigner");
+    /************** Настраиваем вкладки ***********/
+
+    ui->tabWidget->setTabVisible(0, false);
+    ui->tabWidget->setTabVisible(1, false);
+    ui->tabWidget->setCurrentIndex(0);
+ ui->colNum->setAlignment(Qt::AlignRight);
+    /************** Настраиваем кнопки переключения вида ***********/
+    ui->desigh->setStyleSheet(AllstyleSheet::SelectTabButton());
+    ui->code_button->setStyleSheet(AllstyleSheet::NoSelectTabButton());
+    ui->combo->setStyleSheet(AllstyleSheet::NoSelectTabButton());
+
+    connect(ui->desigh,&QPushButton::clicked,this,&Widget::tabUpdateButtons);
+    connect(ui->combo,&QPushButton::clicked,this,&Widget::tabUpdateButtons);
+    connect(ui->code_button,&QPushButton::clicked,this,&Widget::tabUpdateButtons);
+   ui->tab_2->layout()->setMargin(0);
+
+    /************** Настраиваем кнопки инструментов (слева) ***********/
+    ui->obj_panel->setStyleSheet(AllstyleSheet::panel_objects());
+    connect(ui->pushbutton_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->checkbox_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->label_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->combobox_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->line_edit,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->list_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->radio_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->speenbox_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->tab_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->textedit_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+    connect(ui->settingsbutton_b,&QPushButton::clicked,this,&Widget::changeActivTool);
+
+
+
+
+    clearActivStateTools();
+    ui->tab->setLayout(box);
+    box->setAlignment(Qt::AlignTop);
+}
+
+Widget::~Widget()
+{
+    delete ui;
+}
+
+void Widget::openProject(QString filePath)
+{
+    if(!filePath.isEmpty()){
+
+        QFileInfo info(filePath);
+
+        //QString tittle = info.fileName();
+        //ui->tabWidget->addTab(edit, tittle);
+        //ui->tabWidget->setCurrentIndex(ui->tabWidget->count()-1);
+        //ui->tabWidget->setTabToolTip(ui->tabWidget->count()-1, filename);
+        QFile file(filePath);
+
+        if(file.open(QIODevice::ReadOnly|QIODevice::Text)){
+            //file.readAll();
+            QString tms;
+            QRegExp PBTN("(PUSH_BUTTON_TOOL)[ ]+(begin)");
+               while(!file.atEnd()){
+                   tms = file.readLine();
+                   if(PBTN.exactMatch(tms) == true){
+
+                   }
+               }
+        //    edit->setPlainText(file.readAll());
+
+        }
+
+    }
+}
+
+
+void Widget::code()
+{
+
+
+}
+
+void Widget::newProject(QString fileName)
+{
+    fileProject = new QFile(fileName);
+}
+
+void Widget::codeEdit()
+{
+
+    if(codeCycle==true){
+        codeCycle=false;
+        return;
+    }else{
+        QString tstr;
+
+        QString data = ui->code_edit->toPlainText();
+        strList = data.split(QRegExp("[\n]"));
+        QString tmpS;
+        QStringList tmp;
+        updateColNumbers(0, false, true);
+    if(currentTool == PUSH_BUTTON_TOOL){
+
+        //   for(int i = 1; i < rightbox->count(); i++){
+        /* Производим каст элемента слоя в объект динамической кнопки
+             * */
+        //  Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+        /* Если номер кнопки соответствует числу, которое установлено
+             * в lineEdit, то производим удаление данной кнопки
+          /   * */
+        //   if(panel->getID() == 2){
+
+        // qDebug()<<"IDPANEL2";
+
+
+        //  }
+        //}
+
+        // col="";
+
+
+        //for(int i=0;i<ui->code_edit->document()->blockCount();i++){
+        // SStmp.at(i) = ui->code_edit->document()->
+        //}
+
+
+        //tstr = ui->code_edit->toPlainText();
+        //      QRegExp colorRx("(color:)[ ]+(#)[0-9A-Fa-f]{6}(;)");
+        //text-align: top;
+        QRegExp panelTextRx("(font:)[ ]+[0-9]+[ ]+[0-9]+(pt)[ ](')[a-zA-Z]+(')(;)");
+        QRegExp colorRx("(color:)[ ]+(#)[0-9A-Fa-f]{6}(;)");
+        QRegExp alignRx("(text-align:)[ ]+(centre|right|top|left|bottom)(;)");
+        QRegExp emptyRx("[ ]+");
+        QRegExp BackgroundColorRx("(background-color:)[ ]+(#)[0-9A-Fa-f]{6}(;)");
+
+          QRegExp BackgroundImageRx("(background-image:)[ ]+(url)[(][A-Za-z0-9/.А-Яа-я\-\_]+[)](;)");
+       QRegExp BackgroundImageRepeatRx("(background-repeat:)[ ]+[a-z\-]+(;)");
+        QRegExp BackgroundImagePosRx("(background-position:)[ ]+[a-z\-]+(;)");
+            QRegExp BorderColorRx("(border-color:)[ ]+(#)[0-9A-Fa-f]{6}(;)");
+                QRegExp BorderStyleRx("(border-style:)[ ]+[a-z]+(;)");
+                    QRegExp BorderPaddingRx("(padding:)[ ]+[0-9]+(px)(;)");
+                            QRegExp RoundRx("(border-radius:)[ ]+[0-9]+(px)(;)");
+                                     QRegExp BorderWidthRx("(border-width:)[ ]+[0-9]+(px)(;)");
+                                         QRegExp end("[}]");
+                                         QRegExp btnNormal("(QPushButton{)");
+                                          QRegExp btnHover("(QPushButton::hover{)");
+                                           QRegExp btnPressed("(QPushButton::pressed{)");
+
+
+        bool falign= true;
+        bool tfont=true;
+        bool fcolor=true;
+        //text-align:left
+        //QRegExp checkLine("");
+        //( )[0-9](pt)[a-zA-Z]
+
+        //check line
+        for(int i=0; i<strList.count();i++){
+            //if(QString tmp = strList.split)
+            tmpS=strList.at(i);
+            tmp = tmpS.split(":");
+            if(tmp.at(0)=="font"){
+
+                if(panelTextRx.exactMatch(tmpS.trimmed())==true){
+                    qDebug()<<"EXACT TRUE PANEL TEXT";
+                    // strList.at(i);
+                    codeError=false;
+                    indexProperty=i;
+                    TextFont = i;
+                    //TextAlign++;
+
+
+                    //TextColor +1;
+                    qDebug()<<"strList: "<<strList;
+                    if(codeError==false){
+                        SSBuffer.removeAt(i);
+                        SSBuffer.insert(i, tmpS.trimmed()+"\n");
+                          tmpS+"\n";
+                        for(int i = 1; i < rightbox->count(); i++){
+                            /* Производим каст элемента слоя в объект динамической кнопки
+                             * */
+                            Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                            if(panel->getStatus()==statusWidget){
+
+                                //
+                                QRegExp TextFontS("[0-9]+(pt)");
+                                //QString str2;
+                                int str2 = TextFontS.indexIn(tmpS);  //str);
+                                int strEnd = TextFontS.lastIndexIn(tmpS);  //str);
+
+                                //qDebug()<<str.at(str2);
+                                //qDebug()<<str.at(strEnd);
+                                //tmpS.count()-strEnd;
+
+                                QString size="";
+                                size += tmpS.at(str2);
+                                size += tmpS.at(strEnd);
+                                qDebug()<<size;
+                                panel->pn->cycle=true;
+                                panel->pn->TPixel->edit->setText(size);
+                                panel->pn->cycle=false;
+                            }
+                        }
+                        if(statusWidget=="NORMAL"){
+
+
+
+
+                            //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                            SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                            //  tmpS.trimmed();
+                        }else if (statusWidget=="PRESSED"){
+                            SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                        }else if (statusWidget=="HOVER"){
+                            SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                        }
+                    }
+                    updateColNumbers(i, true, true); //index, type, true green/false red
+
+                }
+
+
+            }else if(tmp.at(0)=="color"){
+                if(colorRx.exactMatch(tmpS)){
+                    indexProperty=i;
+                    TextColor = i;
+
+
+
+
+                    codeError=false;
+                    updateColNumbers(i, true, true);
+                    qDebug()<<"EXACT match color";
+                    if(codeError==false){
+                        SSBuffer.removeAt(i);
+                        SSBuffer.insert(i, tmpS.trimmed()+="\n");
+                        tmpS+"\n";
+
+                        if(statusWidget=="NORMAL"){
+
+
+
+
+                            //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                            SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                            //  tmpS.trimmed();
+                        }else if (statusWidget=="PRESSED"){
+                            SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                        }else if (statusWidget=="HOVER"){
+                            SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                        }
+                        for(int i = 1; i < rightbox->count(); i++){
+                            /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                            Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                            if(panel->getStatus()==statusWidget){
+
+                                //
+                                //   QRegExp TextFontS("[0-9]+(pt)");
+                            }
+                        }
+
+                    }
+                }
+
+            }else if(tmp.at(0)=="background-color"){
+                if(BackgroundColorRx.exactMatch(tmpS)){
+                    indexProperty=i;
+                    BackgroundColor = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match ALIGN!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+                    tmpS+"\n";
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="background-image"){
+                if(BackgroundImageRx.exactMatch(tmpS)){
+                    indexProperty=i;
+                    BackgroundImage = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+tmpS+"\n";
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+
+            }else if(tmp.at(0)=="border-color"){
+                if(BorderColorRx.exactMatch(tmpS))
+                {
+                    indexProperty=i;
+                    MarginColor = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+tmpS+"\n";
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="border-style"){
+                if(BorderStyleRx.exactMatch(tmpS))
+                {
+                    indexProperty=i;
+                    MarginStyle = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+tmpS+"\n";
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmpS=="QPushButton{"){
+                if(btnNormal.exactMatch(tmpS))
+                {
+                    //indexProperty=i;
+                 //   MarginStyle = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmpS=="QPushButton::hover{"){
+                if(btnHover.exactMatch(tmpS))
+                {
+                    //indexProperty=i;
+                 //   MarginStyle = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmpS=="}"){
+                if(end.exactMatch(tmpS))
+                {
+                    //indexProperty=i;
+                 //   MarginStyle = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmpS=="QPushButton::pressed{"){
+                if(btnPressed.exactMatch(tmpS))
+                {
+                    //indexProperty=i;
+                 //   MarginStyle = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="padding"){
+                if(BorderPaddingRx.exactMatch(tmpS))
+                {
+                    indexProperty=i;
+                    MarginPadding = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+tmpS+"\n";
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="border-radius"){
+                if(RoundRx.exactMatch(tmpS))
+                {
+                    indexProperty=i;
+                    Round = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+tmpS+"\n";
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="background-repeat"){
+                if( BackgroundImageRepeatRx.exactMatch(tmpS)){
+                    indexProperty=i;
+                   BackgroundRepeate = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    SSBuffer.insert(i, tmpS.trimmed()+="\n");
+tmpS+"\n";
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="background-position"){
+                if( BackgroundImagePosRx.exactMatch(tmpS)){
+                    indexProperty=i;
+                    TextAlign = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    tmpS = tmpS.trimmed();
+                    tmpS+= "\n";
+                    SSBuffer.insert(i, tmpS);
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="border-width"){
+                if( BorderWidthRx.exactMatch(tmpS)){
+                    indexProperty=i;
+                    MarginWidth = i;
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match BackIMAGE!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    tmpS = tmpS.trimmed();
+                    tmpS+= "\n";
+                    SSBuffer.insert(i, tmpS);
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+                }
+            }else if(tmp.at(0)=="text-align"){
+                if(alignRx.exactMatch(tmpS)){
+                    indexProperty=i;
+                    TextAlign = i;
+
+
+
+
+
+
+
+                codeError=false;
+                updateColNumbers(i, true, true);
+                qDebug()<<"EXACT match ALIGN!!!";
+                if(codeError==false){
+                    SSBuffer.removeAt(i);
+                    tmpS = tmpS.trimmed();
+                    tmpS+= "\n";
+                    SSBuffer.insert(i, tmpS);
+
+                    if(statusWidget=="NORMAL"){
+
+
+
+
+                        //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                        //  tmpS.trimmed();
+                    }else if (statusWidget=="PRESSED"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "PRESSED");
+                    }else if (statusWidget=="HOVER"){
+                        SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "HOVER");
+                    }
+                    for(int i = 1; i < rightbox->count(); i++){
+                        /* Производим каст элемента слоя в объект динамической кнопки
+                            * */
+                        Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                        if(panel->getStatus()==statusWidget){
+
+                            //
+                            //   QRegExp TextFontS("[0-9]+(pt)");
+                        }
+                    }
+
+                }
+
+            }else if(emptyRx.exactMatch(tmpS)){
+                SSBuffer.removeAt(i);
+                SSBuffer.insert(i,tmpS);
+                codeError=false;
+                // SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                // ui->code_edit->setText(SSBuffer.at(i));   //SSBuffer.at(i);
+                updateColNumbers(i, true, true);
+                //   qDebug()<<"EMPTY";
+            }else if(tmpS.isEmpty()){
+                SSBuffer.removeAt(i);
+                SSBuffer.insert(i,"\n");
+                codeError=false;
+                //SetCodeSS("PANEL_TEXT","PUSH_BUTTON_TOOL", "NORMAL");
+                //ui->code_edit->setText(SSBuffer.at(i));   //SSBuffer.at(i);
+                updateColNumbers(i, true, true);
+                qDebug()<<"EMPTY";
+                //  }else if(!emptyRx.exactMatch(tmpS)){
+                //          //   SSBuffer.removeAt(i);
+                // SSBuffer.insert(i,tmpS);
+                //     updateColNumbers(i, true, false);
+                //     codeError = true;
+            }
+
+
+
+
+    // qDebug()<<ui->code_edit->document()->blockCount();
+    }
+    qDebug()<<"Buffer: "<<SSBuffer;
+}
+        for(int i = 0; i < box->count(); i++){
+
+            DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+            if(wdt->getID()==wdt_ID){
+                if(statusWidget=="NORMAL"){
+                   wdt->NTextFont= TextFont;
+                   wdt->NTextColor=  TextColor;
+                   wdt->NTextAlign=  TextAlign;
+                   wdt->NBackgroundColor=  BackgroundColor;
+                  wdt->NBackgroundImage=   BackgroundImage;
+                  wdt->NBackgroundRepeate=   BackgroundRepeate;
+                   wdt->NBackgroundPosition=  BackgroundPosition;
+                 wdt->NRound=    Round;
+                 wdt->NMarginWidth=    MarginWidth;
+                  wdt->NMarginStyle=   MarginStyle;
+                   wdt->NMarginColor=   MarginColor;
+                   wdt->NMarginPadding=    MarginPadding;
+                }else if(statusWidget=="HOVER"){
+                    wdt->HTextFont= TextFont;
+                    wdt->HTextColor=  TextColor;
+                    wdt->HTextAlign=  TextAlign;
+                    wdt->HBackgroundColor=  BackgroundColor;
+                   wdt->HBackgroundImage=   BackgroundImage;
+                   wdt->HBackgroundRepeate=   BackgroundRepeate;
+                    wdt->HBackgroundPosition=  BackgroundPosition;
+                  wdt->HRound=    Round;
+                  wdt->HMarginWidth=    MarginWidth;
+                   wdt->HMarginStyle=   MarginStyle;
+                    wdt->HMarginColor=   MarginColor;
+                    wdt->HMarginPadding=    MarginPadding;
+                }else if(statusWidget=="PRESSED"){
+                    wdt->PTextFont= TextFont;
+                    wdt->PTextColor=  TextColor;
+                    wdt->PTextAlign=  TextAlign;
+                    wdt->PBackgroundColor=  BackgroundColor;
+                   wdt->PBackgroundImage=   BackgroundImage;
+                   wdt->PBackgroundRepeate=   BackgroundRepeate;
+                    wdt->PBackgroundPosition=  BackgroundPosition;
+                  wdt->PRound=    Round;
+                  wdt->PMarginWidth=    MarginWidth;
+                   wdt->PMarginStyle=   MarginStyle;
+                    wdt->PMarginColor=   MarginColor;
+                    wdt->PMarginPadding=    MarginPadding;
+                }
+
+            }
+        }
+}
+}
+}
+
+void Widget::addPanel(QString status)
+{
+    rightbox->addWidget( new Panel("ГЕОМЕТРИЯ", "PANEL_GEOMETRYS",status)); //0
+
+    rightbox->addWidget( new Panel("ТЕКСТ", "PANEL_TEXT", status)); //1
+
+    rightbox->addWidget( new Panel("ГРАНИЦЫ", "PANEL_MARGINS",status)); //2
+
+    rightbox->addWidget( new Panel("ФОН", "PANEL_BACKGROUND", status)); //3
+
+    rightbox->addWidget(   new Panel("ИКОНКА", "PANEL_ICON", status)); //4
+
+    rightbox->addWidget(    new Panel("СКРУГЛЕНИЕ", "PANEL_ROUND", status)); //5
+
+    for(int i=0; i<rightbox->count(); i++){
+        Panel * panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+        connect (panel, &Panel::changeData, this,&Widget::onDataChanged);
+
+
+    }
+}
+
+void Widget::updateAllData(QString status, QString toolType, bool cycle)
+{
+    if(cycle==true){
+if(toolType=="PUSH_BUTTON_TOOL"){
+    //for(int c=1; c<i;c++){
+        for(int i = 0; i < rightbox->count(); i++){
+            /* Производим каст элемента слоя объект panel нужный находим
+         * */
+            Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+            if(panel->getStatus()==status){
+               //  SSBuffer="";
+               if(panel->getTypePanel()=="PANEL_GEOMETRYS"){
+
+                  onDataChanged("PANEL_GEOMETRYS","PUSH_BUTTON_TOOL",i,false);
+               }else if(panel->getTypePanel()=="PANEL_TEXT"){
+                      onDataChanged("PANEL_TEXT","PUSH_BUTTON_TOOL",i,false);
+               }else if(panel->getTypePanel()=="PANEL_MARGINS"){
+                      onDataChanged("PANEL_MARGINS","PUSH_BUTTON_TOOL",i,false);
+               }else if(panel->getTypePanel()=="PANEL_BACKGROUND"){
+                      onDataChanged("PANEL_BACKGROUND","PUSH_BUTTON_TOOL",i,false);
+               }else if(panel->getTypePanel()=="PANEL_ICON"){
+                      onDataChanged("PANEL_ICON","PUSH_BUTTON_TOOL",i,false);
+            }else if(panel->getTypePanel()=="PANEL_ROUND"){
+                   onDataChanged("PANEL_ROUND","PUSH_BUTTON_TOOL",i,false);
+            }
+            }
+    //}
+}
+    }
+    }else if(cycle==false){
+      return ;
+    }
+}
+
+void Widget::tabUpdateButtons()
+{
+    QPushButton *btn = qobject_cast <QPushButton*>(sender());
+    ui->desigh->setStyleSheet(AllstyleSheet::NoSelectTabButton());
+    ui->code_button->setStyleSheet(AllstyleSheet::NoSelectTabButton());
+    ui->combo->setStyleSheet(AllstyleSheet::NoSelectTabButton());
+    if(btn->objectName()=="desigh"){
+        ui->desigh->setStyleSheet(AllstyleSheet::SelectTabButton());
+        ui->tabWidget->setCurrentIndex(0);
+    }else if(btn->objectName()=="code_button"){
+        ui->code_button->setStyleSheet(AllstyleSheet::SelectTabButton());
+        ui->tabWidget->setCurrentIndex(1);
+    }else{
+        ui->combo->setStyleSheet(AllstyleSheet::SelectTabButton());
+        //  ui->tabWidget->setCurrentIndex(2);
+    }
+}
+
+
+
+void Widget::setAplicationMenu()
+{
+
+}
+
+
+/* Меняем содержимое интерфейса в зависимости от
+ * выбранного инструмента. Функция вызывается, когда пользователь
+ * кликает по кнопке инструментов слева.
+ * С помощью имени объекта понимаем, какая именно из кнопок была нажата,
+ * поскольку все они связаны с одним слотом.
+ */
+void Widget::changeActivTool()
+{
+    clearActivStateTools(); //фцнкция очистки панели не удаляя spacer если 1 < n-widgets
+    /* sender'ом приравниваем к типу qpushbutton и сверяем имя обтекта через if */
+    QPushButton *btn = qobject_cast <QPushButton*>(sender());
+
+    if(btn->objectName()=="pushbutton_b"){
+        currentTool = PUSH_BUTTON_TOOL;
+        ui->pushbutton_b->setStyleSheet(AllstyleSheet::getPushBottonToolActive());
+
+    }else if(btn->objectName()=="checkbox_b"){
+        currentTool = CHECK_BOX_TOOL;
+        ui->checkbox_b->setStyleSheet(AllstyleSheet::getCheckBoxToolActive());
+    } else if(btn->objectName()=="label_b"){
+        currentTool = LABEL_TOOL;
+        ui->label_b->setStyleSheet(AllstyleSheet::getLabelActive());
+    } else if(btn->objectName()=="line_edit"){
+        currentTool = LINE_EDIT_TOOL;
+        ui->line_edit->setStyleSheet(AllstyleSheet::getLineEditActive());
+    }else if(btn->objectName()=="textedit_b"){
+        currentTool = TEXT_EDIT_TOOL;
+        ui->textedit_b->setStyleSheet(AllstyleSheet::getTextEditActive());
+    }else if(btn->objectName()=="combobox_b"){
+        currentTool = COMBO_BOX_TOOL;
+        ui->combobox_b->setStyleSheet(AllstyleSheet::getCBOXActive());
+    } else if(btn->objectName()=="radio_b"){
+        currentTool = RADIO_BUTTON_TOOL;
+        ui->radio_b->setStyleSheet(AllstyleSheet::getRadioBtnActive());
+    } else if(btn->objectName()=="speenbox_b"){
+        currentTool = SPIN_BOX_TOOL;
+        //    setPanelGroup(); //фунция установки текущей группы панели справа currentTool = SPIN_BOX_TOOL;
+        ui->speenbox_b->setStyleSheet(AllstyleSheet::getSBOXActive());
+    }else if(btn->objectName()=="tab_b"){
+        currentTool = TAB_WIDGET_TOOL;
+        ui->tab_b->setStyleSheet(AllstyleSheet::getTabWActive());
+    }else if(btn->objectName()=="list_b"){
+        currentTool = LIST_WIDGET_TOOL;
+        ui->list_b->setStyleSheet(AllstyleSheet::getListWActive());
+    }else if(btn->objectName()=="settingsbutton_b"){
+        currentTool = SETTINGS_BUTTON_TOOL;
+        ui->settingsbutton_b->setStyleSheet(AllstyleSheet::getToolBtnActives());
+
+    }
+    setPanelGroup(); //фунция установки текущей группы панели справаw
+}
+
+
+
+
+/* Устанавливаем содержимое для правой панели.
+ * Содержимое будет разным для разных инструментов.
+ */
+void Widget::setPanelGroup()
+{
+    switch (currentTool) {
+    case PUSH_BUTTON_TOOL:
+        setPushButtonPanels();
+
+        break;
+    case CHECK_BOX_TOOL:
+        setCheckBoxPanels();
+        break;
+    case LABEL_TOOL:
+        setLabelPanels();
+        break;
+    case COMBO_BOX_TOOL:
+        setCBOXPanels();
+        break;
+    case LINE_EDIT_TOOL:
+        setLeditPanels();
+        break;
+    case LIST_WIDGET_TOOL:
+        setListWPanels();
+        break;
+    case RADIO_BUTTON_TOOL:
+        setRadioBtnPanels();
+        break;
+    case SPIN_BOX_TOOL:
+        setSBOXPanels();
+        break;
+    case TAB_WIDGET_TOOL:
+        setTabWPanels();
+        break;
+    case TEXT_EDIT_TOOL:
+        setTeditPanels();
+        break;
+    case SETTINGS_BUTTON_TOOL:
+        setTBTNPanels();
+        break;
+    }
+}
+
+void Widget::clearActivStateTools() //сбрасывает кнопки в normal slate
+{
+    ui->pushbutton_b->setStyleSheet(AllstyleSheet::getPushBottonToolNormal());
+    ui->checkbox_b->setStyleSheet(AllstyleSheet::getCheckBoxToolNormal());
+    ui->label_b->setStyleSheet(AllstyleSheet::getLabelNormal());
+    ui->combobox_b->setStyleSheet(AllstyleSheet::getCBOXNormal());
+    ui->line_edit->setStyleSheet(AllstyleSheet::getLineEditNormal());
+    ui->list_b->setStyleSheet(AllstyleSheet::getListWNormal());
+    ui->radio_b->setStyleSheet(AllstyleSheet::getRadioBtnNormal());
+    ui->speenbox_b->setStyleSheet(AllstyleSheet::getSBOXNormal());
+    ui->tab_b->setStyleSheet(AllstyleSheet::getTabWNormal());
+    ui->textedit_b->setStyleSheet(AllstyleSheet::getTextEditNormal());
+    ui->settingsbutton_b->setStyleSheet(AllstyleSheet::getToolBtnNormal());
+}
+
+void Widget::removeAllPanels() //удаление виджитов и items c панели
+{
+  for(int i=0; i<rightbox->count(); i++) {
+        //int itemIndex = rightbox->count();
+       // qDebug() << "Элементов в layout = "<<rightbox->count();
+       // qDebug() << "Удаляем элемент с индексом " <<itemIndex;
+      Panel * panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+  //panel->setVisible(false);
+ //      delete panel;
+  if(i+1==panel->getID()){
+     panel->setVisible(false);
+
+     // rightbox->removeWidget(panel);
+     // delete panel;
+  }
+  }
+
+}
+
+void Widget::setPushButtonPanels()
+{
+
+
+
+
+    qDebug()<<"QPushButton select tool-panel";
+    removeAllPanels();
+    DynamicWidgetTool *dwt = new DynamicWidgetTool("PUSH_BUTTON_TOOL",0,"NORMAL");
+    box->addWidget(dwt);
+    //dwt->btnNormal->setStyleSheet("font: 300 57pt 'Ubuntu Light';");
+    wdt_ID = dwt->getID();
+
+ connect(dwt,&DynamicWidgetTool::newPanel, this,&Widget::newPanel);
+
+
+
+    //  for(int i = 1; i < rightbox->count(); i++){
+    /* Производим каст элемента слоя в объект динамической кнопки
+             * */
+    //   Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+    /* Если номер кнопки соответствует числу, которое установлено
+             * в lineEdit, то производим удаление данной кнопки
+             * */
+    //  if(panel->getID() == 1){
+    //
+    // qDebug()<<panel->getID();
+    //     qDebug()<<"PanelID: "<<panel->getID();
+    //panel->setName("ГЕОМЕТРИЯ");
+    // panel->setType("PANEL_GEOMETRY");
+
+    //  }
+    //   }
+
+    //  int index = 0;
+    // rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", "PANEL_GEOMETRYS"));
+    // index ++;
+    // rightbox->insertWidget(index, new Panel("ТЕКСТ", "PANEL_TEXT"));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", "PANEL_MARGINS"));
+    // index ++;
+    //  rightbox->insertWidget(index, new Panel("ФОН", "PANEL_BACKGROUND"));
+    //  index ++;
+    // rightbox->insertWidget(index, new Panel("ИКОНКА", "PANEL_ICON"));
+    // //  index ++;
+    // rightbox->insertWidget(index, new Panel("СКРУГЛЕНИЕ", "PANEL_ROUND"));
+    //Panel *panel = new Panel;
+
+
+}
+
+void Widget::setCheckBoxPanels()
+{
+    //   qDebug()<<"CHeckBox select tool-panel";
+    //  removeAllPanels();
+    //  int index = 0;
+    //  rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    // index ++;
+    // rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    //  index ++;
+    // rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    //  index ++;
+    // rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+
+}
+
+void Widget::setLabelPanels()
+{
+    //  qDebug()<<"QLabel select tool-panel";
+    // removeAllPanels();
+    //  int index = 0;
+    //  rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    // index ++;
+    //  rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ИКОНКА", PANEL_ICON));
+}
+
+void Widget::setCBOXPanels()
+
+{
+    //  qDebug()<<"QComboBox select tool-panel";
+    // removeAllPanels();
+    //  int index = 0;
+    // rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    // index ++;
+    // rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    //  index ++;
+    // rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+}
+
+void Widget::setLeditPanels()
+{
+    //   qDebug()<<"QLineEdit select tool-panel";
+    // removeAllPanels();
+    //  int index = 0;
+    //  rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    //  index ++;
+    // rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    // index ++;
+    //  rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+
+}
+
+void Widget::setListWPanels()
+{
+    //   qDebug()<<"ListView select tool-panel";
+    //  removeAllPanels();
+    //  int index = 0;
+    // rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    //  index ++;
+    //   rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+
+}
+
+void Widget::setRadioBtnPanels()
+{
+    //   qDebug()<<"QRadioButton select tool-panel";
+    //  removeAllPanels();
+    //  int index = 0;
+    //  rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    //    index ++;
+    // rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    //  index ++;
+    // / rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+    // index ++;
+    //  rightbox->insertWidget(index, new Panel("ИКОНКА", PANEL_ICON));
+
+}
+
+void Widget::setSBOXPanels()
+{
+    //  qDebug()<<"QSpinBox select tool-panel";
+    // removeAllPanels();
+    //  int index = 0;
+    //rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    //index ++;
+    // rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    //  index ++;
+    // rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    // index ++;
+    //  rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+
+
+}
+
+void Widget::setTabWPanels()
+{
+    //    qDebug()<<"QPTabView widget select tool-panel";
+    // removeAllPanels();
+    //  int index = 0;
+    //  rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    //  index ++;
+    // rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    // index ++;
+    //  rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+
+}
+
+void Widget::setTeditPanels()
+{
+    //   qDebug()<<"QTextEdit select tool-panel";
+    //  removeAllPanels();
+    //  int index = 0;
+    //  rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", PANEL_GEOMETRY));
+    //  index ++;
+    //  rightbox->insertWidget(index, new Panel("ТЕКСТ", PANEL_TEXT));
+    // index ++;
+    // rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", PANEL_MAGRINGS));
+    //index ++;
+    //rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+
+}
+
+void Widget::setTBTNPanels()
+{
+    //   qDebug()<<"ToolButton select tool-panel";
+    //  removeAllPanels();
+    //int index = 0;
+    // rightbox->insertWidget(index, new Panel("ГЕОМЕТРИЯ", "PANEL_GEOMETRY"));
+    // index ++;
+    //  rightbox->insertWidget(index, new Panel("ТЕКСТ", "PANEL_TEXT"));
+    // index ++;
+    //rightbox->insertWidget(index, new Panel("ГРАНИЦЫ", "PANEL_MAGRINGS"));
+    // index ++;
+    //rightbox->insertWidget(index, new Panel("ФОН", PANEL_BACKGROUND));
+    //index ++;
+    // rightbox->insertWidget(index, new Panel("ИКОНКА", PANEL_ICON));
+    // index ++;
+    //rightbox->insertWidget(index, new Panel("СКРУГЛЕНИЕ", PANEL_ROUND));
+}
+
+void Widget::insertTOList(int i)
+{
+ for(int c=0; c<i;c++){
+     SSBuffer.insert(c," ");
+ }
+}
+
+void Widget::updateColNumbers(int index, bool type, bool color)
+{
+    col="";
+
+    if(type==false){
+        for(int i=0; i<indicators.count();i++){
+            indicators.removeAt(i);
+        }
+        for(int i=0; i<ui->code_edit->document()->blockCount();i++){
+              indicators.removeAt(i);
+              indicators.insert(i,QString::number(i)+"<font color='red'>|</font>"+"\n");
+              //   QLabel *indicator = new QLabel;
+
+
+
+           }
+        for(int i=0; i<indicators.count();i++){
+            col+=indicators.at(i);
+
+        }
+
+    }else if(type==true){
+        indicators.removeAt(index);
+        if(color==true){
+          indicators.insert(index,QString::number(index)+"<font color='green'>|</font>"+"\n");
+        }else{
+             indicators.insert(index,QString::number(index)+"<font color='red'>|</font>"+"\n");
+        }
+
+        for(int i=0; i<indicators.count();i++){
+            col+=indicators.at(i);
+
+        }
+    }
+      ui->colNum->setHtml(col);
+     // ui->colNum->moveCursor(QTextCursor::End);
+}
+
+void Widget::tool_button()
+{
+    if(tool_button_slate==true){
+
+    }
+}
+
+void Widget::SetSSDWT(QString panelType, QString toolType, QString status, int IDpanel, bool cycle)
+{
+    QString tmpN = "";
+    QString tmpPress="";
+    QString tmpHover="";
+    if(toolType=="PUSH_BUTTON_TOOL"){
+
+            for(int i = 0; i < box->count(); i++){
+                DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+                if(wdt->getID()==wdt_ID){
+
+                    if(status=="NORMAL"){
+
+                        int count;
+                        count = SSBuffer.count();
+                    tmpN="";
+                  //  SSBuffer.removeAt(0);
+                  //  SSBuffer.insert(0,"QPushButton{\n");
+                    for(int i=0;i<count;i++){
+                          wdt->SSBuffer_nor.removeAt(i);
+                          wdt->SSBuffer_nor.insert(i, SSBuffer.at(i));
+                    }
+
+                  // if(!strList.isEmpty()){
+                    //for(int i=0; i<strList.count(); i++){
+                    //SSBuffer.insert(i, strList.at(i));
+
+
+
+//tmp = ui->code_edit->toPlainText();
+//font: 20 20pt 'ubuntu' ;
+                    for(int i=0; i<wdt->SSBuffer_nor.count(); i++){
+                     tmpN+= wdt->SSBuffer_nor.at(i);
+                    }
+                   // tmp=tmp+"}";
+
+                    ui->code_edit->clear();
+                 ui->code_edit->setText(tmpN);
+                wdt->btnNormal->setStyleSheet(tmpN);
+                        if(check==false){
+                            wdt->btnNormal->setText("");
+                        }else if(check==true){
+                             wdt->btnNormal->setText("Test");
+                        }
+
+                      }else if(status=="HOVER"){
+
+                            int count;
+                            count = SSBuffer.count();
+                  tmpHover="";
+
+         //               SSBuffer.removeAt(0);
+   //  SSBuffer.insert(0,"QPushButton::hover{\n");
+                        for(int i=0;i<count;i++){
+                              wdt->SSBuffer_hover.removeAt(i);
+                              wdt->SSBuffer_hover.insert(i, SSBuffer.at(i));
+                        }
+
+                      // if(!strList.isEmpty()){
+                        //for(int i=0; i<strList.count(); i++){
+                        //SSBuffer.insert(i, strList.at(i));
+
+
+
+    //tmp = ui->code_edit->toPlainText();
+    //font: 20 20pt 'ubuntu' ;
+                        for(int i=0; i<wdt->SSBuffer_hover.count(); i++){
+                         tmpHover+= wdt->SSBuffer_hover.at(i);
+                        }
+                                //qDebug()<<"RIGHTBOX.COUNT posle: "<<rightbox->count();
+
+   // qDebug()<<"SS "<<tmp;
+   // tmp=tmp+"}";
+                        ui->code_edit->clear();
+                     ui->code_edit->setText(tmpHover);
+                    wdt->btnHover->setStyleSheet(tmpHover);
+                            if(check==false){
+                                wdt->btnHover->setText("");
+                            }else if(check==true){
+                                 wdt->btnHover->setText("Test");
+                            }
+
+                        }else  if(status=="PRESSED"){
+
+                                int count;
+                                count = SSBuffer.count();
+                            tmpPress="";
+                   //         SSBuffer.removeAt(0);
+    // SSBuffer.insert(0,"QPushButton::pressed{\n");
+                            for(int i=0;i<count;i++){
+                                  wdt->SSBuffer_pressed.removeAt(i);
+                                  wdt->SSBuffer_pressed.insert(i, SSBuffer.at(i));
+                            }
+                          // if(!strList.isEmpty()){
+                            //for(int i=0; i<strList.count(); i++){
+                            //SSBuffer.insert(i, strList.at(i));
+
+
+
+        //tmp = ui->code_edit->toPlainText();
+        //font: 20 20pt 'ubuntu' ;
+                            for(int i=0; i<wdt->SSBuffer_pressed.count(); i++){
+                             tmpPress+= wdt->SSBuffer_pressed.at(i);
+                            }
+                                    //qDebug()<<"RIGHTBOX.COUNT posle: "<<rightbox->count();
+ //tmp = tmp+"}";
+      //  qDebug()<<"SS "<<tmp;
+                            ui->code_edit->clear();
+                         ui->code_edit->setText(tmpPress);
+                        wdt->btnPressed->setStyleSheet(tmpPress);
+                                if(check==false){
+                                    wdt->btnPressed->setText("");
+                                }else if(check==true){
+                                     wdt->btnPressed->setText("Test");
+                                }
+
+
+                }
+
+        }
+    }
+            }
+}
+
+
+void Widget::SetCodeSS(QString panelType, QString toolType, QString status)
+{
+    if(toolType=="PUSH_BUTTON_TOOL"){
+
+ //");
+
+QString tmpc="";
+  QString tmp="";
+      QString tmpB="";
+             // QtDesignerSS="";
+            for(int i = 0; i < box->count(); i++){
+                DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+                if(wdt->getID()==wdt_ID){
+
+                    if(status=="NORMAL"){
+
+                        int count;
+                        count = SSBuffer.count();
+
+
+                    for(int i=0;i<count;i++){
+                          wdt->SSBuffer_nor.removeAt(i);
+                          wdt->SSBuffer_nor.insert(i, SSBuffer.at(i));
+                    }
+
+                  // if(!strList.isEmpty()){
+                    //for(int i=0; i<strList.count(); i++){
+                    //SSBuffer.insert(i, strList.at(i));
+
+
+
+//tmp = ui->code_edit->toPlainText();
+//font: 20 20pt 'ubuntu' ;
+                   for(int i=0; i<wdt->SSBuffer_nor.count(); i++){
+                    tmp+= wdt->SSBuffer_nor.at(i);
+                    }
+                            //qDebug()<<"RIGHTBOX.COUNT posle: "<<rightbox->count();
+
+//qDebug()<<"codeSS "<<tmp;
+                // ui->code_edit->setText(tmp.trimmed());
+                 //     QtDesignerSS     +=tmp;
+                wdt->btnNormal->setStyleSheet(tmp);
+                        if(check==false){
+                            wdt->btnNormal->setText("");
+                        }else if(check==true){
+                             wdt->btnNormal->setText("Test");
+                        }
+
+                    }else if(status=="PRESSED"){
+                      //wdt->SSBuffer_pressed.removeAt(IDpanel);
+                      //  wdt->SSBuffer_pressed.insert(IDpanel,SSBuffer);
+
+
+                         tmpB="";
+                         int count;
+                         count = SSBuffer.count();
+
+
+                         for(int i=0;i<count;i++){
+                               wdt->SSBuffer_pressed.removeAt(i);
+                               wdt->SSBuffer_pressed.insert(i, SSBuffer.at(i));
+                         }
+
+
+                         for(int i=0; i<wdt->SSBuffer_pressed.count(); i++){
+                          tmpB+= wdt->SSBuffer_pressed.at(i);
+                         }
+                   //        QtDesignerSS     +=tmpB;
+ wdt->btnPressed->setStyleSheet(tmpB);
+                           // ResultCodeSS+=tmpB;
+                         //   QString tmpa=tmpB;
+                           //ResultCodeSS+=tmpa;
+                           // ui->code_edit->setText(ResultCodeSS);
+                          //  wdt->btnPressed->setStyleSheet(tmpB);
+                            if(check==false){
+                                wdt->btnPressed->setText("");
+                            }else if(check==true){
+                                wdt->btnPressed->setText("Test");
+                            }
+                    }else if(status=="HOVER"){
+                      //  wdt->SSBuffer_hover.removeAt(IDpanel);
+                      //  wdt->SSBuffer_hover.insert(IDpanel,SSBuffer);
+                         // wdt->SSBuffer_hover = SSBuffer.split("<>");
+
+                        int count;
+
+                        count = SSBuffer.count();
+                        for(int i=0;i<count;i++){
+                              wdt->SSBuffer_hover.removeAt(i);
+                              wdt->SSBuffer_hover.insert(i, SSBuffer.at(i));
+                        }
+
+
+                        for(int i=0; i<wdt->SSBuffer_hover.count(); i++){
+                         tmpc+= wdt->SSBuffer_hover.at(i);
+                        }
+//QtDesignerSS+=tmpc;
+                       wdt->btnHover->setStyleSheet(tmpc);
+                      //  ResultCodeSS+=tmpB;
+                        //ui->code_edit->setText(ResultCodeSS);
+                       // qDebug()<<ResultCodeSS;
+                        if(check==false){
+                            wdt->btnHover->setText("");
+                        }else if(check==true){
+                            wdt->btnHover->setText("Test");
+                        }
+                    }
+
+                }
+
+        }
+
+
+
+
+    }
+}
+
+
+
+
+
+void Widget::showMenu()
+{
+    // int x = ui->menuButton->pos().x()+5;
+    //  int y = ui->menuButton->pos().y()+30;
+    //  menu->popup(this->mapToGlobal(QPoint(x,y)));
+}
+
+void Widget::onDataChanged(QString PanelType, QString ToolType, int ID,bool cycle)
+{
+    ID_PANEL = ID;
+    qDebug()<<"Data changed WIDGET!";
+    qDebug()<<PanelType;
+    qDebug()<<ToolType;
+    if(ToolType=="PUSH_BUTTON_TOOL"){
+        if(PanelType=="PANEL_TEXT"){
+            // :)
+            for(int i = 1; i < rightbox->count(); i++){
+                /* Производим каст элемента слоя объект panel нужный находим
+             * */
+                Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+
+                if(panel->getID()==ID){
+                    qDebug()<<"FROM WIDGET WIDGET PANEL_SIZE!!!: "<<panel->pn->getSizeF();
+                    QString TEXT_SS =panel->pn->getSizeF();
+                    QString size = "font: " + panel->pn->getBoldText() + " "+ TEXT_SS+"pt" + " '" + panel->pn->getFont() +"'" +";\n";
+                    QString color = "color: " + panel->pn->getColor() + ";\n";
+                    QString align= "text-align: left;\n";
+
+                    if(panel->pn->getAlignmentF()==0){ //left
+                        align= "text-align: left;\n";
+                    }else if(panel->pn->getAlignmentF()==1){ //вверх центр
+                        align= "text-align: top;\n";
+                    }else if (panel->pn->getAlignmentF()==2){ //центр
+                        align= "text-align: centre;\n";
+                    }else if(panel->pn->getAlignmentF()==3){ //вниз центр
+                        align= "text-align: bottom;\n";
+                    }else if(panel->pn->getAlignmentF()==4){ //право
+
+                        align= "text-align: right;\n";
+                    }
+                    if(!panel->pn->enableText->isChecked()){
+                        check = false;
+                    }else{
+
+                        check = true;
+                    }
+                 //   SSBuffer="";
+
+                   SSBuffer.removeAt(TextFont);
+                   SSBuffer.insert(TextFont,size);
+                   SSBuffer.removeAt(TextColor);
+                  SSBuffer.insert(TextColor,color);
+                    SSBuffer.removeAt(TextAlign);
+                   SSBuffer.insert(TextAlign,align);
+
+                   // += size += color += align;
+qDebug()<<SSBuffer;
+         int count;
+       count =  SSBuffer.count();
+
+       qDebug()<<"COUNT "<<count;
+                    if(panel->GetStatus()=="NORMAL"){
+                          //updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                   SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "NORMAL", panel->getID()-1, false);
+
+                    }else if (panel->GetStatus()=="PRESSED"){
+                          //updateAllData("PRESSED","PUSH_BUTTON_TOOL",cycle);
+                       SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "PRESSED",panel->getID()-1,false);
+                    }else if (panel->GetStatus()=="HOVER"){
+                         // updateAllData("HOVER","PUSH_BUTTON_TOOL",cycle);
+                       SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "HOVER",panel->getID()-1,false);
+                    }
+                }
+            }
+
+
+        }else if(PanelType=="PANEL_BACKGROUND"){
+            for(int i = 1; i < rightbox->count(); i++){
+                /* Производим каст элемента слоя в объект panel нужный находим
+             * */
+                Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                if(panel->getID()==ID){
+                    QString tmp_color;
+                    QString tmpCl = panel->contentBackground->getColor()+";\n";
+                    tmp_color="background-color: " + tmpCl;
+                    QString gradient_tmp = panel->contentBackground->getGradient()+";\n";
+                  //  SSBuffer+=tmp_color+=gradient_tmp;
+
+                    SSBuffer.removeAt(BackgroundColor);
+                     SSBuffer.insert(BackgroundColor,tmp_color);
+                   if(!panel->contentBackground->getGradient().isEmpty()){
+                       SSBuffer.removeAt(BackgroundColor);
+                       SSBuffer.insert(BackgroundColor,gradient_tmp);
+
+                   }
+
+                    int count;
+                  count =  SSBuffer.count();
+                    if(panel->GetStatus()=="NORMAL"){
+                     //     updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                    SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "NORMAL", panel->getID()-1,false);
+                    }else if (panel->GetStatus()=="PRESSED"){
+                      //    updateAllData("PRESSED","PUSH_BUTTON_TOOL",cycle);
+                   SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "PRESSED", panel->getID()-1,false);
+                    }else if (panel->GetStatus()=="HOVER"){
+                      //    updateAllData("HOVER","PUSH_BUTTON_TOOL",cycle);
+                     SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "HOVER",  panel->getID()-1,false);
+
+            }
+                }
+            }
+        }else if(PanelType=="PANEL_ICON"){
+            for(int i = 1; i < rightbox->count(); i++){
+                /* Производим каст элемента слоя в объект panel нужный находим
+             * */
+                Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                if(panel->getID()==ID){
+                    QString tmp;
+                    QString tmp1;
+                    QString tmp2;
+                    QString tmp3;
+                  // tmp="image: url(" + panel->contentIcon->getIconPath() +"); \n";
+                    tmp1=      "background-image: url("+ panel->contentIcon->getIconPath()+");\n";
+                    tmp2  =          "background-repeat: " +panel->contentIcon->getRepeat()+";\n";
+                    tmp3 =           "background-position: " +panel->contentIcon->getPos() +";\n";
+
+
+                       if(!panel->contentIcon->getIconPath().isEmpty()){
+                           SSBuffer.removeAt(BackgroundImage);
+                           SSBuffer.insert(BackgroundImage,tmp1);
+                    //   }else if(!panel->contentIcon->getRepeat().isEmpty()){
+                           SSBuffer.removeAt(BackgroundRepeate);
+                           SSBuffer.insert(BackgroundRepeate,tmp2);
+
+                    //   }else if(!panel->contentIcon->getPos().isEmpty()){
+                           SSBuffer.removeAt(BackgroundPosition);
+                           SSBuffer.insert(BackgroundPosition,tmp3);
+                       }
+
+          //              qDebug()<<"ICON: "<<tmp;
+                      //  int count;
+                  //    count =  SSBuffer.count();
+                      if(panel->GetStatus()=="NORMAL"){
+                       //     updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                      SetSSDWT("PANEL_ICON","PUSH_BUTTON_TOOL", "NORMAL", panel->getID()-1,false);
+                      }else if (panel->GetStatus()=="PRESSED"){
+                        //    updateAllData("PRESSED","PUSH_BUTTON_TOOL",cycle);
+                     SetSSDWT("PANEL_ICON","PUSH_BUTTON_TOOL", "PRESSED", panel->getID()-1,false);
+                      }else if (panel->GetStatus()=="HOVER"){
+                        //    updateAllData("HOVER","PUSH_BUTTON_TOOL",cycle);
+                       SetSSDWT("PANEL_ICON","PUSH_BUTTON_TOOL", "HOVER",  panel->getID()-1,false);
+
+              }
+                }
+            }
+        }else if(PanelType=="PANEL_ROUND"){
+            for(int i = 1; i < rightbox->count(); i++){
+
+                Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                if(panel->getID()==ID){
+
+                  QString tmp;
+                  QString lastTmp;
+                // QString tmp = "border-width: 1px;"
+                //               "border-radius: 10px;";
+                //  tmp+="border-style: outset; \n";
+                   tmp= "border-radius: "+  panel->contentRound->getRound()+"px; \n";
+                  if(!panel->contentRound->getRound().isEmpty()){
+                     SSBuffer.removeAt(Round);
+                     SSBuffer.insert(Round,tmp);
+                  }
+
+                // if(!panel->contentRound->enableRound->isChecked()){
+
+                //  lastTmp = tmp;
+                //          tmp="";
+               //  }else{
+                //     tmp = lastTmp;
+                 //}
+
+
+                //  tmp = "background-color: red";
+                  qDebug()<<tmp;
+
+                    int count;
+                  count =  SSBuffer.count();
+                    if(panel->GetStatus()=="NORMAL"){
+                 //         updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                   SetSSDWT("PANEL_ROUND","PUSH_BUTTON_TOOL", "NORMAL",  panel->getID()-1, false);
+                    }else if (panel->GetStatus()=="PRESSED"){
+                   //       updateAllData("PRESSED","PUSH_BUTTON_TOOL",cycle);
+                     SetSSDWT("PANEL_ROUND","PUSH_BUTTON_TOOL", "PRESSED",  panel->getID()-1,false);
+                    }else if (panel->GetStatus()=="HOVER"){
+                    //      updateAllData("HOVER","PUSH_BUTTON_TOOL",cycle);
+                       SetSSDWT("PANEL_ROUND","PUSH_BUTTON_TOOL", "HOVER", panel->getID()-1,false);
+
+
+                }
+            }
+            }
+        }else if(PanelType=="PANEL_MARGINS"){
+            for(int i = 1; i < rightbox->count(); i++){
+
+                Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                if(panel->getID()==ID){
+
+                    QString tmpz;
+                    QString tmp1z;
+                    QString tmp2z;
+                    QString tmp3z;
+                          tmp2z ="";
+                    //QString lastTmp;
+                  // QString tmp = "border-width: 1px;"
+                            //     "border-radius: 10px;";
+                          QString tmpcolor = panel->contentMargins->getColorBorder();
+                          tmp2z=    "border-color: "+tmpcolor+ ";\n";
+                tmpz="border-width:"+panel->contentMargins->getBoldBorder()+ "px;\n";
+                tmp1z =   "border-style:" +panel->contentMargins->getTypeBorder() +";\n";
+
+                tmp3z=    "padding: "+panel->contentMargins->getMArginInside()+"px;\n";
+
+               // if(!panel->contentMargins->getBoldBorder().isEmpty()){
+                    SSBuffer.removeAt(MarginWidth);
+                    SSBuffer.insert(MarginWidth,tmpz);
+               // }else if(!panel->contentMargins->getTypeBorder().isEmpty()){
+                    SSBuffer.removeAt(MarginStyle);
+                    SSBuffer.insert(MarginStyle,tmp1z);
+
+                if(!panel->contentMargins->getColorBorder().isEmpty()){
+                    SSBuffer.removeAt(MarginColor);
+                    SSBuffer.insert(MarginColor,tmp2z);
+                }
+                 //     }else if(!panel->contentMargins->getMArginInside().isEmpty()){
+                    SSBuffer.removeAt(MarginPadding);
+                    SSBuffer.insert(MarginPadding,tmp3z);
+                //}
+                   // qDebug()<<tmp;
+
+
+
+
+                  //  tmp = "background-color: red";
+                //    qDebug()<<tmp;
+
+                      int count;
+                    count =  SSBuffer.count();
+                      if(panel->GetStatus()=="NORMAL"){
+                     //      updateAllData("NORMAL","PUSH_BUTTON_TOOL",cycle);
+                     SetSSDWT("PANEL_MARGINS","PUSH_BUTTON_TOOL", "NORMAL", panel->getID()-1,false);
+
+                      }else if (panel->GetStatus()=="PRESSED"){
+                        //     updateAllData("PRESSED","PUSH_BUTTON_TOOL",cycle);
+                 SetSSDWT("PANEL_MARGINS","PUSH_BUTTON_TOOL", "PRESSED", panel->getID()-1,false);
+                      }else if (panel->GetStatus()=="HOVER"){
+                       //      updateAllData("HOVER","PUSH_BUTTON_TOOL",cycle);
+                SetSSDWT("PANEL_MARGINS","PUSH_BUTTON_TOOL", "HOVER", panel->getID()-1,false);
+
+                }
+                }
+            }
+
+        }
+
+    }
+
+}
+
+
+
+
+
+
+void Widget::on_code_edit_textChanged()
+{
+    if(codeCycle==false){
+
+    codeEdit();
+
+    }else if(codeCycle==true){
+        codeCycle=false;
+        qDebug()<<"edit RETURN BREAK!!11";
+        return;
+
+    }
+}
+
+
+
+void Widget::newPanel( QString type, QString status) // 1)type 2)toolType 3)statusPanel
+{
+    statusWidget = status;
+    qDebug()<<"RIGHTBOX.COUNT DO: "<<rightbox->count();
+    removeAllPanels();
+    if(currentTool==PUSH_BUTTON_TOOL){
+        //    if(type=="PANEL_TEXT"){
+
+
+  if (status=="NORMAL"){
+        QString tmpN="";
+        SSBuffer.clear();
+        for(int i=0;i<SSBuffer.count();i++) SSBuffer.removeAt(i);
+        for(int i = 0; i < box->count(); i++){
+
+            DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+            if(wdt->getID()==wdt_ID){
+               // if(statusWidget=="HOVER"){
+                 TextFont =   wdt->NTextFont;
+                    TextColor=wdt->NTextColor;
+                   TextAlign=wdt->NTextAlign;
+                  BackgroundColor= wdt->NBackgroundColor;
+                  BackgroundImage=wdt->NBackgroundImage;
+                 BackgroundRepeate= wdt->NBackgroundRepeate;
+                 BackgroundPosition=  wdt->NBackgroundPosition;
+                Round= wdt->NRound;
+                 MarginWidth=wdt->NMarginWidth;
+                 MarginStyle= wdt->NMarginStyle;
+                 MarginColor=  wdt->NMarginColor;
+                  MarginPadding= wdt->NMarginPadding;
+
+                  for(int i=0; i<wdt->SSBuffer_nor.count();i++){
+                      SSBuffer.removeAt(i);
+                      SSBuffer.insert(i,wdt->SSBuffer_nor.at(i));
+                  }
+                  for(int i=0; i<wdt->SSBuffer_nor.count(); i++){
+                   tmpN+= wdt->SSBuffer_nor.at(i);
+                  }
+            }
+        }
+
+                    ui->code_edit->clear();
+        if(first_normal==true){
+
+            addPanel(status);
+            first_normal=false;
+             SSBuffer.clear();
+              insertTOList(12);
+        }else if(first_hover==false){
+
+            for(int i = 1; i < rightbox->count(); i++){
+                /* Производим каст элемента слоя в объект динамической кнопки
+                 * */
+                Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                if(panel->getStatus()==status){
+
+                    codeCycle=true;
+                    ui->code_edit->clear();
+
+                    ui->code_edit->setText(tmpN);
+                    //codeEdit();
+                    panel->setVisible(true);
+                     //      SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "HOVER",  panel->getID()-1,false);
+                }
+            }
+        }
+        }else if (status=="HOVER"){
+            QString tmp="";
+            SSBuffer.clear();
+            for(int i=0;i<SSBuffer.count();i++) SSBuffer.removeAt(i);
+            for(int i = 0; i < box->count(); i++){
+
+                DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+                if(wdt->getID()==wdt_ID){
+                   // if(statusWidget=="HOVER"){
+                     TextFont =   wdt->HTextFont;
+                        TextColor=wdt->HTextColor;
+                       TextAlign=wdt->HTextAlign;
+                      BackgroundColor= wdt->HBackgroundColor;
+                      BackgroundImage=wdt->HBackgroundImage;
+                     BackgroundRepeate= wdt->HBackgroundRepeate;
+                     BackgroundPosition=  wdt->HBackgroundPosition;
+                    Round= wdt->HRound;
+                     MarginWidth=wdt->HMarginWidth;
+                     MarginStyle= wdt->HMarginStyle;
+                     MarginColor=  wdt->HMarginColor;
+                      MarginPadding= wdt->HMarginPadding;
+
+                      for(int i=0; i<wdt->SSBuffer_hover.count();i++){
+                          SSBuffer.insert(i,wdt->SSBuffer_hover.at(i));
+                      }
+                      for(int i=0; i<wdt->SSBuffer_hover.count(); i++){
+                       tmp+= wdt->SSBuffer_hover.at(i);
+                      }
+                }
+            }
+
+                        ui->code_edit->clear();
+            if(first_hover==true){
+
+                addPanel(status);
+                first_hover=false;
+                 SSBuffer.clear();
+                  insertTOList(12);
+            }else if(first_hover==false){
+
+                for(int i = 1; i < rightbox->count(); i++){
+                    /* Производим каст элемента слоя в объект динамической кнопки
+                     * */
+                    Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                    if(panel->getStatus()==status){
+
+                        codeCycle=true;
+                        ui->code_edit->clear();
+
+                        ui->code_edit->setText(tmp);
+                        //codeEdit();
+                        panel->setVisible(true);
+                         //      SetSSDWT("PANEL_BACKGROUND","PUSH_BUTTON_TOOL", "HOVER",  panel->getID()-1,false);
+                    }
+                }
+            }
+        }else if (status=="PRESSED"){
+            SSBuffer.clear();
+            for(int i=0;i<SSBuffer.count();i++) SSBuffer.removeAt(i);
+                codeCycle=true;
+                QString tmpc ="";
+            for(int i = 0; i < box->count(); i++){
+
+                DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+                if(wdt->getID()==wdt_ID){
+                    //if(statusWidget=="PRESSED"){
+                     TextFont =   wdt->PTextFont;
+                     TextColor=  wdt->PTextColor;
+                      TextAlign =  wdt->PTextAlign;
+                       BackgroundColor= wdt->PBackgroundColor;
+                      BackgroundImage=wdt->PBackgroundImage;
+                     BackgroundRepeate= wdt->PBackgroundRepeate;
+                      BackgroundPosition=  wdt->PBackgroundPosition;
+                      Round= wdt->PRound;
+                     MarginWidth=wdt->PMarginWidth;
+                      MarginStyle=wdt->PMarginStyle;
+                      MarginColor= wdt->PMarginColor;
+                       MarginPadding=wdt->PMarginPadding;
+                       for(int i=0; i<wdt->SSBuffer_pressed.count();i++){
+                           SSBuffer.removeAt(i);
+                           SSBuffer.insert(i,wdt->SSBuffer_pressed.at(i));
+                       }
+                       for(int i=0; i<wdt->SSBuffer_pressed.count(); i++){
+                        tmpc+= wdt->SSBuffer_pressed.at(i);
+                       }
+                   // }
+                }
+            }
+
+
+
+
+
+            if(first_pressed==true){
+                        //  SSBuffer.clear();
+                addPanel(status);
+                first_pressed=false;
+
+                  insertTOList(12);
+            }else if(first_pressed==false){
+                for(int i = 1; i < rightbox->count(); i++){
+                    /* Производим каст элемента слоя в объект динамической кнопки
+                     * */
+                    Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
+                    if(panel->getStatus()==status){
+
+
+                       // codeEdit();
+
+                          //    updateAllData("HOVER","PUSH_BUTTON_TOOL",cycle);
+
+
+                    qDebug()<<"SSPREssed: "<< tmpc;
+                   ui->code_edit->setText(tmpc);
+
+
+                        panel->setVisible(true);
+                    }
+                }
+            }
+        }
+
+
+
+
+        //}
+    }
+}
+
+
+void Widget::on_copyWidgetSS_clicked()
+{
+    QtDesignerSS="";
+    notificationPopUp *notify = new notificationPopUp;
+    notify->textOglav = "Для вставки PushButton";
+             notify->textNotify = "CTRL+V в QtDesigner";
+             notify->setN();
+             notify->setOglav();
+     notify->show();
+
+    QClipboard *clipboard = QApplication::clipboard();
+  //  QString originalText = clipboard->text();
+
+   QString tmpXml ="";
+    for(int i = 0; i < box->count(); i++){
+
+        DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+        if(wdt->getID()==wdt_ID){
+            //if(statusWidget=="PRESSED"){
+           QString snormal="QPushButton{\n";
+           QString shover="QPushButton::hover{\n";
+           QString spressed="QPushButton::pressed{\n";
+
+               for(int i=0; i<wdt->SSBuffer_nor.count(); i++){
+                snormal+= wdt->SSBuffer_nor.at(i);
+               }
+               for(int i=0; i<wdt->SSBuffer_hover.count(); i++){
+                shover+= wdt->SSBuffer_hover.at(i);
+               }
+               for(int i=0; i<wdt->SSBuffer_pressed.count(); i++){
+                spressed+= wdt->SSBuffer_pressed.at(i);
+               }
+              QtDesignerSS+= snormal.append("\n}\n");
+              QtDesignerSS+= shover.append("\n}\n");
+              QtDesignerSS+= spressed.append("\n}\n");
+
+              tmpXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                     "<ui version=\"4.0\">"
+                      "<widget name=\"__qt_fake_top_level\">"
+                       "<widget class=\"QPushButton\" name=\"pushButton\">"
+                        "<property name=\"geometry\">"
+                         "<rect>"
+                          "<x>60</x>"
+                          "<y>120</y>"
+                          "<width>211</width>"
+                          "<height>41</height>"
+                         "</rect>"
+                        "</property>"
+                        "<property name=\"styleSheet\">"
+                         "<string notr=\"true\">";
+             tmpXml+=QtDesignerSS;
+             tmpXml.append("</string>"
+                           "</property>"
+                           "<property name=\"text\">"
+                            "<string>PushButton</string>"
+                           "</property>"
+                          "</widget>"
+                         "</widget>"
+                         "<resources/>"
+                        "</ui>\""
+                           );
+
+        }
+    }
+     clipboard->setText(tmpXml);
+
+}
+
+
+void Widget::on_copySS_clicked()
+{
+    notificationPopUp *notify = new notificationPopUp;
+     notify->textOglav = "SS PushButton";
+              notify->textNotify = "qss скопирован";
+              notify->setN();
+              notify->setOglav();
+     notify->show();
+
+QtDesignerSS ="";
+
+    QClipboard *clipboard = QApplication::clipboard();
+  //  QString originalText = clipboard->text();
+
+
+    for(int i = 0; i < box->count(); i++){
+
+        DynamicWidgetTool *wdt = qobject_cast<DynamicWidgetTool*>(box->itemAt(i)->widget());
+        if(wdt->getID()==wdt_ID){
+            //if(statusWidget=="PRESSED"){
+           QString snormal="QPushButton{\n";
+           QString shover="QPushButton::hover{\n";
+           QString spressed="QPushButton::pressed{\n";
+
+               for(int i=0; i<wdt->SSBuffer_nor.count(); i++){
+                snormal+= wdt->SSBuffer_nor.at(i);
+               }
+               for(int i=0; i<wdt->SSBuffer_hover.count(); i++){
+                shover+= wdt->SSBuffer_hover.at(i);
+               }
+               for(int i=0; i<wdt->SSBuffer_pressed.count(); i++){
+                spressed+= wdt->SSBuffer_pressed.at(i);
+               }
+              QtDesignerSS+= snormal.append("\n}\n");
+              QtDesignerSS+= shover.append("\n}\n");
+              QtDesignerSS+= spressed.append("\n}\n");
+
+ }
+    }
+     clipboard->setText(QtDesignerSS);
+     if(fileProject->open(QIODevice::WriteOnly|QIODevice::Text))
+     {
+
+
+
+        QFileInfo info(fileNames);
+        this->setWindowTitle("QSS - "+info.fileName());
+
+        if(currentTool==PUSH_BUTTON_TOOL){
+            projectCodeFile+="PUSH_BUTTON_TOOL begin\n";
+            projectCodeFile+= QtDesignerSS;
+            projectCodeFile+="end";
+            fileProject->write(projectCodeFile.toUtf8());
+            fileProject->close();
+        }
+
+
+     }
+ }
+
+
