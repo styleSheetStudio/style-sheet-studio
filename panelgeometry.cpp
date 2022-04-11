@@ -1,10 +1,11 @@
 #include "panelgeometry.h"
+#include "allstylesheet.h"
 
 panelGeometry::panelGeometry(QWidget *parent)
     : QWidget(parent)
 {
     this->setFixedSize(200,53);
-
+this->setStyleSheet(AllstyleSheet::getPanelCSS());
       widthEdit->setGeometry(0,0,130,25);
       widthEdit->name->setText("Ширина");
       widthEdit->name->setAlignment(Qt::AlignLeft);

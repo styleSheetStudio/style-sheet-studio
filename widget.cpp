@@ -179,7 +179,7 @@ qDebug()<<"PROJECT Openning!";
                           if(strT.at(i)=="}"){
                               btnN=false;
                           }else{
-                              normal+=strT.at(i).trimmed();
+                              normal+=strT.at(i).trimmed()+"\n";
                           }
                       }else if(strT.at(i)=="QPushButton::hover{"){
                           //  hover+=strT.at(i)+"\n";
@@ -189,7 +189,7 @@ qDebug()<<"PROJECT Openning!";
 
                               btnH=false;
                           }else{
-                              hover+=strT.at(i).trimmed();
+                              hover+=strT.at(i).trimmed()+"\n";
                           }
                       }else if(strT.at(i)=="QPushButton::pressed{"){
                           btnP=true;
@@ -199,7 +199,7 @@ qDebug()<<"PROJECT Openning!";
                           if(strT.at(i)=="}"){
                               btnP=false;
                           }else{
-                              pressed+=strT.at(i).trimmed();
+                              pressed+=strT.at(i).trimmed()+"\n";
                           }
                       }else if(strT.at(i)=="end"){
                           setPushButtonPanels();
@@ -1981,19 +1981,21 @@ qDebug()<<SSBuffer;
              * */
                 Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
                 if(panel->getID()==ID){
-                    QString tmp_color;
+                    QString tmp_color="";
+
                     QString tmpCl = panel->contentBackground->getColor()+";\n";
                     tmp_color="background-color: " + tmpCl;
                     QString gradient_tmp = panel->contentBackground->getGradient()+";\n";
                   //  SSBuffer+=tmp_color+=gradient_tmp;
 
-                    SSBuffer.removeAt(BackgroundColor);
-                     SSBuffer.insert(BackgroundColor,tmp_color);
-                   if(!panel->contentBackground->getGradient().isEmpty()){
-                       SSBuffer.removeAt(BackgroundColor);
-                       SSBuffer.insert(BackgroundColor,gradient_tmp);
+                    if(!panel->contentBackground->getGradient().isEmpty()){
+                        SSBuffer.removeAt(BackgroundColor);
+                        SSBuffer.insert(BackgroundColor,gradient_tmp);
 
-                   }
+                    }else if(!panel->contentBackground->getColor().isEmpty()){
+                        SSBuffer.removeAt(BackgroundColor);
+                         SSBuffer.insert(BackgroundColor,tmp_color);
+                    }
 
                     int count;
                   count =  SSBuffer.count();
@@ -2060,16 +2062,17 @@ qDebug()<<SSBuffer;
                 Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
                 if(panel->getID()==ID){
 
-                  QString tmp;
+                  QString tmp="";
                   QString lastTmp;
                 // QString tmp = "border-width: 1px;"
                 //               "border-radius: 10px;";
                 //  tmp+="border-style: outset; \n";
-                   tmp= "border-radius: "+  panel->contentRound->getRound()+"px; \n";
+
                   if(!panel->contentRound->getRound().isEmpty()){
+                     tmp= "border-radius: "+  panel->contentRound->getRound()+"px; \n";
                      SSBuffer.removeAt(Round);
                      SSBuffer.insert(Round,tmp);
-                  }
+           }
 
                 // if(!panel->contentRound->enableRound->isChecked()){
 
@@ -2245,13 +2248,14 @@ qDebug()<<SSBuffer;
                 Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
                 if(panel->getID()==ID){
 
-                  QString tmp;
+                  QString tmp="";
                   QString lastTmp;
                 // QString tmp = "border-width: 1px;"
                 //               "border-radius: 10px;";
                 //  tmp+="border-style: outset; \n";
-                   tmp= "border-radius: "+  panel->contentRound->getRound()+"px; \n";
+
                   if(!panel->contentRound->getRound().isEmpty()){
+                           tmp= "border-radius: "+  panel->contentRound->getRound()+"px; \n";
                      SSBuffer.removeAt(Round);
                      SSBuffer.insert(Round,tmp);
                   }
@@ -2298,12 +2302,14 @@ qDebug()<<SSBuffer;
                 QString gradient_tmp = panel->contentBackground->getGradient()+";\n";
               //  SSBuffer+=tmp_color+=gradient_tmp;
 
-                SSBuffer.removeAt(BackgroundColor);
-                 SSBuffer.insert(BackgroundColor,tmp_color);
+
                if(!panel->contentBackground->getGradient().isEmpty()){
                    SSBuffer.removeAt(BackgroundColor);
                    SSBuffer.insert(BackgroundColor,gradient_tmp);
 
+               }else if(!panel->contentBackground->getColor().isEmpty()){
+                   SSBuffer.removeAt(BackgroundColor);
+                    SSBuffer.insert(BackgroundColor,tmp_color);
                }
 
                 int count;
@@ -2449,19 +2455,20 @@ qDebug()<<SSBuffer;
              * */
                 Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
                 if(panel->getID()==ID){
-                    QString tmp_color;
+                    QString tmp_color="";
                     QString tmpCl = panel->contentBackground->getColor()+";\n";
                     tmp_color="background-color: " + tmpCl;
                     QString gradient_tmp = panel->contentBackground->getGradient()+";\n";
                   //  SSBuffer+=tmp_color+=gradient_tmp;
 
-                    SSBuffer.removeAt(BackgroundColor);
-                     SSBuffer.insert(BackgroundColor,tmp_color);
-                   if(!panel->contentBackground->getGradient().isEmpty()){
-                       SSBuffer.removeAt(BackgroundColor);
-                       SSBuffer.insert(BackgroundColor,gradient_tmp);
+                    if(!panel->contentBackground->getGradient().isEmpty()){
+                        SSBuffer.removeAt(BackgroundColor);
+                        SSBuffer.insert(BackgroundColor,gradient_tmp);
 
-                   }
+                    }else if(!panel->contentBackground->getColor().isEmpty()){
+                        SSBuffer.removeAt(BackgroundColor);
+                         SSBuffer.insert(BackgroundColor,tmp_color);
+                    }
 
                     int count;
                   count =  SSBuffer.count();
@@ -2528,13 +2535,14 @@ qDebug()<<SSBuffer;
                 Panel *panel = qobject_cast<Panel*>(rightbox->itemAt(i)->widget());
                 if(panel->getID()==ID){
 
-                  QString tmp;
+                  QString tmp="";
                   QString lastTmp;
                 // QString tmp = "border-width: 1px;"
                 //               "border-radius: 10px;";
                 //  tmp+="border-style: outset; \n";
-                   tmp= "border-radius: "+  panel->contentRound->getRound()+"px; \n";
+
                   if(!panel->contentRound->getRound().isEmpty()){
+                        tmp= "border-radius: "+  panel->contentRound->getRound()+"px; \n";
                      SSBuffer.removeAt(Round);
                      SSBuffer.insert(Round,tmp);
                   }

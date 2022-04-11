@@ -15,6 +15,7 @@ Panel::Panel(QWidget *parent) : QWidget(parent)
 
 Panel::Panel(QString name, QString type, QString status,QString tool, QWidget *parent): QWidget(parent)
 {
+    this->setStyleSheet(AllstyleSheet::getPanelCSS());
     toolchain = tool;
     typep = type;
     this->setStyleSheet("background:#ccc;");

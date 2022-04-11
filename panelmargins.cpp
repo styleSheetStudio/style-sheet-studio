@@ -1,8 +1,9 @@
 #include "panelmargins.h"
-
+#include "allstylesheet.h"
 panelMargins::panelMargins(QWidget *parent)
     : QWidget(parent)
 {
+    this->setStyleSheet(AllstyleSheet::getPanelCSS());
       this->setFixedSize(200,175);
   QLabel * vlabel = new QLabel(this);
 

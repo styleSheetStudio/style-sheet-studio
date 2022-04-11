@@ -1,8 +1,9 @@
 #include "panelround.h"
-
+#include "allstylesheet.h"
 panelRound::panelRound(QWidget *parent)
     : QWidget(parent)
 {
+    this->setStyleSheet(AllstyleSheet::getPanelCSS());
      this->setFixedSize(200,125);
 
 roundp->setGeometry(0,0,130,25);

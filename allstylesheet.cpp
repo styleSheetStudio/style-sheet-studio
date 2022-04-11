@@ -366,6 +366,140 @@ QString AllstyleSheet::getTextEditActive()
     "}";
 }
 
+QString AllstyleSheet::getPanelCSS()
+{
+return
+      " QComboBox"
+       " {"
+        "    border: 2px solid rgba(0, 0, 0, 102);"
+         "   padding-left: 10px;"
+          "  padding-right: 10px;"
+           " padding-top: 3px;"
+           " padding-bottom: 4px;"
+            "   background: rgb(255, 255, 255);"
+       "}"
+      "QPushButton"
+"{"
+    "background: rgb(255, 255, 255);"
+    "border: 2px solid transparent;"
+    "padding-left: 14px;"
+    "padding-right: 14px;"
+    "padding-top: 4px;"
+    "padding-bottom: 4px;"
+"}"
+
+"QPushButton:hover"
+"{"
+  "  border: 2px solid rgba(0, 0, 0, 102);"
+"}"
+
+"QPushButton:pressed"
+"{"
+ "  border: 2px solid transparent;"
+    "background: rgba(0, 0, 0, 102);"
+"}"
+
+
+
+        "QComboBox:hover:!pressed"
+        "{"
+         "border-color: rgb(102, 102, 102);"
+        "}"
+
+       " QComboBox::pressed"
+        "{"
+         "   background: rgb(204, 204, 204);"
+        "}"
+
+        "QComboBox QAbstractItemView"
+         "{"
+          "border: 1px solid rgb(204, 204, 204);"
+
+         "selection-background-color: lightgray;"
+          "padding-left: 9px;"
+         "padding-right: 9px;"
+        "background:  rgb(255, 255, 255);"
+       "}"
+
+        "QComboBox QAbstractItemView::item"
+        "{"
+         "   padding-top: 3px;"
+        "   padding-bottom: 4px;"
+       "}"
+
+
+       " QComboBox::drop-down"
+        "{"
+          "  border: none;"
+         "  padding-right: 8px;"
+        "}"
+
+        "QComboBox::down-arrow"
+        "{"
+          "  image: url(:/style/images/checkbox_down_arrow.svg);"
+         "height: 6px;"
+        "width: 12px;"
+       "}"
+        "QLineEdit{"
+         "background: rgb(255, 255, 255);"
+           "color: rgb(0, 0, 0);"
+          "border: 2px solid rgba(0, 0, 0, 102);"
+
+        "}"
+        "QLineEdit::focus{"
+         "background:  rgb(255, 255, 255);"
+           "color: rgb(0, 0, 0);"
+          "border: 2px solid rgba(0, 0, 0, 102);"
+
+        "}"
+
+       "QCheckBox::indicator"
+        "{"
+        " width: 16px;"
+         " height: 16px;"
+          " border: 2px solid rgb(0, 0, 0);"
+        "}"
+
+
+       " QCheckBox::indicator:disabled"
+       "{"
+          "border: 2px solid rgb(172, 172, 172);"
+        "}"
+
+
+        "QCheckBox::indicator::pressed"
+       " {"
+          "  border: 2px solid rgb(102, 102, 102);"
+         "   background: rgb(102, 102, 102);"
+        "}"
+
+        "QCheckBox::indicator:checked"
+       "{"
+        "image: url(:/style/images/checkbox_checked.svg);"
+        "}"
+
+        "QCheckBox::indicator:checked:!pressed"
+        "{"
+           " border: 2px solid rgb(0, 99, 177);"
+          " background: rgb(0, 99, 177);"
+         " image: url(:/style/images/checkbox_checked.svg);"
+        "}"
+
+        "QCheckBox::indicator:checked:!pressed:hover"
+        "{"
+         "   border: 2px solid rgb(0, 0, 0);"
+        "}"
+
+
+        "QCheckBox::indicator:indeterminate"
+         "{"
+            "image: url(:/style/images/checkbox_indeterminate.svg);"
+          "  border: 2px solid rgb(0, 99, 177);"
+        "}";
+
+
+}
+
 QString AllstyleSheet::getToolBtnActives()
 {
     return

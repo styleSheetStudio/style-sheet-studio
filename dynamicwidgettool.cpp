@@ -65,6 +65,11 @@ DynamicWidgetTool::DynamicWidgetTool(QString type,  int ID, QString currentTool,
            btnNormal = new QPushButton(this);
            btnHover = new QPushButton(this);
            btnPressed = new QPushButton(this);
+               btnNormal ->setText("Test");
+             btnHover->setText("Test");
+           btnPressed->setText("Test");
+
+
 
            labeln->setText("нормальный");
            labelh->setText("наведенный");
@@ -74,11 +79,49 @@ DynamicWidgetTool::DynamicWidgetTool(QString type,  int ID, QString currentTool,
                   btnHover->setGeometry(110,0,100,28);
                   btnPressed->setGeometry(220,0,100,28);
 
+                   NTextFont=0;
+                   NTextColor=1;
+                   NTextAlign=2;
+                   NBackgroundColor =3;
+                   NBackgroundImage =4;
+                   NBackgroundRepeate =5;
+                   NBackgroundPosition =6;
+                   NRound = 7;
+                   NMarginWidth =8;
+                   NMarginStyle=9;
+                      NMarginColor=10;
+                      NMarginPadding=11;
+
+                      HTextFont=0;
+                       HTextColor=1;
+                       HTextAlign=2;
+                       HBackgroundColor =3;
+                       HBackgroundImage =4;
+                       HBackgroundRepeate =5;
+                       HBackgroundPosition =6;
+                       HRound = 7;
+                       HMarginWidth =8;
+                       HMarginStyle=9;
+                       HMarginColor=10;
+                       HMarginPadding=11;
+
+                       PTextFont=0;
+                       PTextColor=1;
+                       PTextAlign=2;
+                       PBackgroundColor =3;
+                       PBackgroundImage =4;
+                       PBackgroundRepeate =5;
+                       PBackgroundPosition =6;
+                       PRound = 7;
+                       PMarginWidth =8;
+                       PMarginStyle=9;
+                       PMarginColor=10;
+                       PMarginPadding=11;
     }
 
     }else if(type=="CHECK_BOX_TOOL"){
         cboxNormal = new QCheckBox(this);
-        cboxPressed = new QCheckBox(this);
+       // cboxPressed = new QCheckBox(this);
         cboxHover = new QCheckBox(this);
         labeln->setText("unchecked");
         labelh->setText("Checked");
@@ -86,15 +129,15 @@ DynamicWidgetTool::DynamicWidgetTool(QString type,  int ID, QString currentTool,
       //  labelp->setVisible(false);
                cboxNormal->setGeometry(20,0,100,28);
                cboxHover->setGeometry(120,0,100,28);
-                 cboxPressed->setGeometry(240,0,100,28);
+
                connect(labeln,&QPushButton::clicked, this,&DynamicWidgetTool::cboxNormalUpdate);
 
                     connect(labelh,&QPushButton::clicked, this,&DynamicWidgetTool::cboxHoverUpdate);
-                   connect(labelp,&QPushButton::clicked, this,&DynamicWidgetTool::cboxPressedUpdate);
-
+                   //connect(labelp,&QPushButton::clicked, this,&DynamicWidgetTool::cboxPressedUpdate);
+labelp->setVisible(false);
 cboxNormal->setText("test");
 cboxHover->setText("test");
-cboxPressed->setText("test");
+//cboxPressed->setText("test");
 //cboxp->setChecked(true);
 //normal
 NCheckBox=0;

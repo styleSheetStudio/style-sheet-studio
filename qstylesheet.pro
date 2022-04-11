@@ -79,7 +79,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     icons.qrc \
-    icons.qrc
+    icons.qrc \
+    style.qrc
 
 DISTFILES += \
     icons/images/plus.png \

@@ -1,8 +1,9 @@
 #include "panelicon.h"
-
+#include "allstylesheet.h"
 panelIcon::panelIcon(QWidget *parent)
     : QWidget(parent)
 {
+    this->setStyleSheet(AllstyleSheet::getPanelCSS());
     this->setFixedSize(200,125);
       QLabel *ilabel = new QLabel(this);
       ilabel->setText("Иконка");

@@ -1,9 +1,11 @@
 #include "panelbackground.h"
 #include "QMessageBox"
 #include "QDebug"
+#include "allstylesheet.h"
 panelBackground::panelBackground(QWidget *parent)
     : QWidget(parent)
 {
+    this->setStyleSheet(AllstyleSheet::getPanelCSS());
   this->setFixedSize(200,125);
     QLabel *clabel = new QLabel(this);
     clabel->setText("Цвет");
@@ -39,6 +41,7 @@ panelBackground::panelBackground(QWidget *parent)
   //connect (GradienT,&QPushButton::clicked,this,&panelBackground::ongradient);
 
   connect (style,&QComboBox::currentText,this,&panelBackground::onstyle);
+   connect (Gradient->line,&QLineEdit::textChanged,this,&panelBackground::ongradient);
 
 }
 
@@ -70,22 +73,13 @@ void panelBackground::onstyle()
 
 void panelBackground::ongradient()
 {
-    if(pick->line->text().isEmpty()){
-       emit onDataUpdate();
-    }else if(!pick->line->text().isEmpty()){
-     QMessageBox::warning(this, "Внимание","Данные цвета будут обнуленны.\n ");
-     pick->line->setText("");
+
         emit onDataUpdate();
-    }
+
 }
 
 void panelBackground::oncolor()
 {
-    if(Gradient->line->text().isEmpty()){
        emit onDataUpdate();
-    }else if(!Gradient->line->text().isEmpty()){
-     QMessageBox::warning(this, "Внимание","Данные в Gradient будут обнуленны.\n ");
-     Gradient->line->setText("");
-        emit onDataUpdate();
-    }
+
 }

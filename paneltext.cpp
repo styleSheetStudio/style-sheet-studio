@@ -1,8 +1,10 @@
 #include "paneltext.h"
 #include "QDebug"
 #include "QCheckBox"
+#include "allstylesheet.h"
 PanelText::PanelText(QWidget *parent) : QWidget(parent)
 {
+    this->setStyleSheet(AllstyleSheet::getPanelCSS());
     this->setFixedSize(200,150);
 
 

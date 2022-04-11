@@ -50,7 +50,9 @@ QMenu::separator {
 QMenu::indicator {
     width: 13px;
     height: 13px;
-}</string>
+}
+
+</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
@@ -912,146 +914,6 @@ QPushButton:default {
         <attribute name="title">
          <string>Tab 1</string>
         </attribute>
-        <widget class="QPushButton" name="pushButton">
-         <property name="geometry">
-          <rect>
-           <x>60</x>
-           <y>264</y>
-           <width>381</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton{
-font: 200 28pt 'Ubuntu';
-color: #000000;
-text-align: left;
-background-color: #d69dff;
-border-radius: 9px;
-       
-}
-QPushButton::hover{
-font: 200 21pt 'Ubuntu';
-color: #f9d4ff;
-text-align: centre;
-background-color: #cfd6ff;
-border-radius: 13px;
-       
-
-
-}
-QPushButton::pressed{
-font: 200 21pt 'Ubuntu';
-color: #f9d4ff;
-text-align: centre;
-background-color: #695071;
-border-radius: 13px;
-       
-
-
-}
-</string>
-         </property>
-         <property name="text">
-          <string>PushButton</string>
-         </property>
-        </widget>
-        <widget class="QCheckBox" name="checkBox_2">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>310</y>
-           <width>101</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QCheckBox{
-font: 200 13pt 'Ubuntu';
-color: #000000;
-text-align: left;
- }
-QCheckBox::indicator{
-image: url(/home/alex/QtFluentDesign-main/images/toggleswitch_off.svg);
-width: 33;
-height: 31;
-}
-   QCheckBox{
-font: 200 12pt 'Ubuntu';
-color: #000000;
-text-align: left;
- }
-QCheckBox::indicator:checked{
-image: url(/home/alex/QtFluentDesign-main/images/toggleswitch_on.svg);
-width: 33;
-height: 33;
-}
-    </string>
-         </property>
-         <property name="text">
-          <string>on</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label">
-         <property name="geometry">
-          <rect>
-           <x>90</x>
-           <y>370</y>
-           <width>351</width>
-           <height>51</height>
-          </rect>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel{
- qproperty-wordWrap: true;
-qproperty-alignment: 'AlignRight';
-}
-QLabel::hover{
-	background-color: rgb(255, 166, 219);
-}
-</string>
-         </property>
-         <property name="text">
-          <string>TextLabelsdfdsgsdfs segfsdfsdfs safsdfdfds safsfsef sefsefsef</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_2">
-         <property name="geometry">
-          <rect>
-           <x>20</x>
-           <y>264</y>
-           <width>31</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QLabel{
-font: 421 27pt 'Ubuntu';
-color: #000000;
-text-align: left;
-background-color: #efcaff;
-   border-radius: 13px; 
-    
-}
-QLabel::hover{font: 521 27pt 'Ubuntu';
-color: #000000;
-text-align: left;
-background-color: #ffe081;
-   border-radius: 9px; 
-    
-}
- </string>
-         </property>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </widget>
        </widget>
        <widget class="QWidget" name="tab_2">
         <attribute name="title">

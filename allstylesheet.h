@@ -50,7 +50,7 @@ public:
 
    static QString getTextEditNormal();
       static QString getTextEditActive();
-
+  static QString getPanelCSS();
       static QString getToolBtnActives();
    static QString getToolBtnNormal();
 

@@ -18,6 +18,7 @@
 #include "panelround.h"
 #include "panelgeometry.h"
 #include "stylecontent.h"
+#include "allstylesheet.h"
 
 class Panel : public QWidget
 {
